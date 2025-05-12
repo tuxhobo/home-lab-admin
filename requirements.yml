@@ -1,0 +1,11 @@
+# ./requirements.yml
+
+---
+collections:
+  - name: community.general
+    version: ">=6.3.0"   # Contains TrueNAS modules, NFS, mount, and more
+  - name: ansible.posix
+    version: ">=1.5.0"   # Required for mount module
+
+roles: []
+

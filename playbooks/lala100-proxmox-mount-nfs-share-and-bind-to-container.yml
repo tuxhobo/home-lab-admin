@@ -1,0 +1,26 @@
+# File: playbooks/lala100-proxmox-mount-nfs-share-and-bind-to-container.yml
+---
+- name: Mount NFS and Bind to Container on Proxmox Host
+  hosts: lala100
+  become: true
+  vars_files:
+    - ../vault/vault.yml
+  vars:
+    app_key: paperless-ngx
+    selected_mount: "{{ mount_sets[app_key] }}"
+    nfs_mount_selection: "{{ selected_mount.nfs.src }}"
+  roles:
+    - role: proxmox_mount_nfs
+      vars:
+        nfs_mount:
+          - src: "{{ selected_mount.nfs.src }}"
+            dest: "{{ selected_mount.nfs.dest }}"
+            fstype: "{{ selected_mount.nfs.fstype | default('nfs') }}"
+    - role: proxmox_bind_mount_lxc
+      vars:
+        target_container: "{{ selected_mount.lxc_bind.container_name }}"
+        source: "{{ selected_mount.lxc_bind.source }}"
+        target: "{{ selected_mount.lxc_bind.target }}"
+        owner: "{{ selected_mount.lxc_bind.owner | default('root') }}"
+        group: "{{ selected_mount.lxc_bind.group | default('root') }}"
+        mode: "{{ selected_mount.lxc_bind.mode | default('0755') }}"

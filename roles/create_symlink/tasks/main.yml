@@ -1,0 +1,14 @@
+# File: ./roles/create_symlink/tasks/main.yml
+---
+- name: Check if symlink source exists
+  stat:
+    path: "{{ symlink_src }}"
+  register: symlink_src_stat
+
+- name: Create symlink if source exists
+  file:
+    src: "{{ symlink_src }}"
+    dest: "{{ symlink_dest }}"
+    state: link
+    force: yes
+  when: symlink_src_stat.stat.exists

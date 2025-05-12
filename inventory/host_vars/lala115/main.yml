@@ -1,0 +1,14 @@
+# File: ./inventory/host_vars/lala115/main.yml
+---
+ansible_python_interpreter: /usr/bin/python3
+
+container_id: 115
+parent_pve_host: lala100
+pve_host_base_path: /mnt/lala110
+container_base_path: /home/admin
+
+link_sets:
+  paperless-ngx:
+    symlink:
+      src: '{{ pve_host_base_path }}/paperless-ngx'
+      dest: '{{ container_base_path }}/paperless-ngx/config'

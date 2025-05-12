@@ -1,0 +1,33 @@
+# File: roles/truenas_dataset/tasks/main.yml
+---
+- name: Create TrueNAS dataset
+  uri:
+    url: "http://{{ truenas_host }}/api/v2.0/pool/dataset"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ truenas_api_key }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      name: "{{ dataset_path }}"
+      comments: "{{ dataset_comment | default('') }}"
+    status_code: 200
+    validate_certs: false
+  register: dataset_result
+
+- name: Set dataset permissions
+  uri:
+    url: "http://{{ truenas_host }}/api/v2.0/pool/dataset/id/{{ dataset_path }}/permission"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ truenas_api_key }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      user: "{{ dataset_owner | default('admin') }}"
+      group: "{{ dataset_group | default('admin') }}"
+      mode: "{{ dataset_mode | default('0775') }}"
+    status_code: 200
+    validate_certs: false
+  when: dataset_result is success and dataset_owner is defined
+

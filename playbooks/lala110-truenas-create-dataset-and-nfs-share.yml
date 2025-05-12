@@ -1,0 +1,27 @@
+# File: playbooks/lala110-truenas-create-dataset-and-nfs-share.yml
+---
+- name: Setup TrueNAS Dataset and NFS Share for Paperless-NGX
+  hosts: lala110
+  become: true
+  vars_files:
+    - ../vault/vault.yml
+  vars:
+    app_key: paperless-ngx
+    dataset_info: "{{ storage[app_key].dataset }}"
+    nfs_share_info: "{{ storage[app_key].nfs_share }}"
+  roles:
+    - role: truenas_dataset
+      vars:
+        dataset_path: "{{ dataset_info.path }}"
+        dataset_name: "{{ dataset_info.name }}"
+        dataset_comment: "{{ dataset_info.comment }}"
+        dataset_owner: "{{ dataset_info.owner | default('admin') }}"
+        dataset_group: "{{ dataset_info.group | default('admin') }}"
+        dataset_mode: "{{ dataset_info.mode | default('0775') }}"
+    - role: truenas_nfs_share
+      vars:
+        nfs_share_dataset: "{{ nfs_share_info.dataset }}"
+        nfs_share_networks: "{{ nfs_share_info.networks }}"
+        nfs_share_maproot_user: "{{ nfs_share_info.maproot_user }}"
+        nfs_share_maproot_group: "{{ nfs_share_info.maproot_group }}"
+        nfs_share_comment: "{{ nfs_share_info.comment }}"

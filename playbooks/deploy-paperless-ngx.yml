@@ -1,0 +1,13 @@
+# File: playbooks/deploy-paperless-ngx.yml (Main orchestration playbook)
+---
+# Import TrueNAS setup play
+- import_playbook: lala110-truenas-create-dataset-and-nfs-share.yml
+
+# Import Proxmox mount and bind play
+- import_playbook: lala100-proxmox-mount-nfs-share-and-bind-to-container.yml  
+
+# Import Docker host symlink play
+- import_playbook: lala115-docker-host-symlink-to-paperless-container.yml
+
+# Import Docker deploy play  
+- import_playbook: lala115-docker-host-deploy-paperless.yml

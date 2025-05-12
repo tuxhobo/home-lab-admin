@@ -1,0 +1,13 @@
+# File: playbooks/lala115-docker-host-symlink-to-paperless-container.yml
+---
+- name: Setup Symlinks in Docker Host
+  hosts: lala115
+  become: true
+  vars_files:
+    - ../vault/vault.yml
+  vars:
+    app_key: paperless-ngx
+    symlink_src: "{{ link_sets[app_key].symlinks[0].src }}"
+    symlink_dest: "{{ link_sets[app_key].symlinks[0].dest }}"
+  roles:
+    - role: create_symlink

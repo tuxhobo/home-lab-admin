@@ -1,0 +1,42 @@
+# ./inventory/inventory.yml
+
+all:
+  children:
+    pvelxe:
+      hosts:
+        plex_media_server:
+          ansible_host: 10.0.0.105
+        netbox:
+          ansible_host: 10.0.0.106
+        lala115:
+          ansible_host: 10.0.0.115
+        syncthing:
+          ansible_host: 10.0.0.125
+        unifi:
+          ansible_host: 10.0.0.9
+        pihole:
+          ansible_host: 10.0.0.10
+    pvevm:
+      hosts:
+        logserver:
+          ansible_host: 10.0.0.104
+        lala110:
+          ansible_host: 10.0.0.110
+    pve:
+      hosts:
+        lala008:
+          ansible_host: 10.0.0.8
+        lala100:
+          ansible_host: 10.0.0.100
+    tnas:
+      hosts:
+        lala110:
+          ansible_host: 10.0.0.110
+        lala120:
+          ansible_host: 10.0.0.120
+        lala130:
+          ansible_host: 10.0.0.130
+    docker:
+      hosts:
+        lala115:
+          ansible_host: 10.0.0.115
