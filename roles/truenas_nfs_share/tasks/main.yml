@@ -14,6 +14,9 @@
       networks: "{{ nfs_share_networks | default([]) }}"
       maproot_user: "{{ nfs_share_maproot_user | default('root') }}"
       maproot_group: "{{ nfs_share_maproot_group | default('wheel') }}"
+      nfs_share_comment: "{{ nfs_share_info.comment }}"
       alldirs: true
-    status_code: 200
+    status_code: [200, 422]
     validate_certs: false
+  register: share_result
+  failed_when: share_result.status not in [200, 422]

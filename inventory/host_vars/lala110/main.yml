@@ -9,7 +9,7 @@ storage:
   paperless-ngx:
     dataset:
       name: paperless-ngx
-      path: /mnt/atl/home/docker/paperless-ngx
+      path: atl/home/lala115-docker/paperless-ngx
       share_name: paperless_ngx_share
       owner: admin
       group: admin
@@ -22,4 +22,3 @@ storage:
       maproot_user: "admin"
       maproot_group: "admin"
       comment: "Paperless NGX NFS share"
-

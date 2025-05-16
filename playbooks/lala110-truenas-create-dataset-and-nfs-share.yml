@@ -10,6 +10,7 @@
     dataset_info: "{{ storage[app_key].dataset }}"
     nfs_share_info: "{{ storage[app_key].nfs_share }}"
   roles:
+    - role: truenas_version_check
     - role: truenas_dataset
       vars:
         dataset_path: "{{ dataset_info.path }}"

@@ -1,0 +1,38 @@
+# File: ./roles/truenas_version_check/tasks/main.yml
+---
+- name: Get TrueNAS version via REST API
+  uri:
+    url: "http://{{ truenas_host }}/api/v2.0/system/version"
+    method: GET
+    headers:
+      Authorization: "Bearer {{ truenas_api_key }}"
+    return_content: yes
+    status_code: 200
+    validate_certs: false
+  register: truenas_version_response
+
+- name: Set raw version string
+  set_fact:
+    truenas_version_raw: "{{ truenas_version_response.content | trim | regex_replace('\"', '') }}"
+
+- name: Extract numeric part of version
+  set_fact:
+    truenas_version_number: "{{ truenas_version_raw | regex_search('^\\d+\\.\\d+') }}"
+  when: truenas_version_raw is defined and truenas_version_raw | length > 0
+
+- name: Debug parsed version
+  debug:
+    msg:
+      - "Raw: {{ truenas_version_raw }}"
+      - "Parsed numeric: {{ truenas_version_number | default('undefined') }}"
+
+- name: Warn if REST API is deprecated
+  debug:
+    msg: >
+      [WARNING] TrueNAS version {{ truenas_version_raw }} uses a deprecated REST API.
+      Future versions may remove it. Plan migration to WebSocket API.
+  when:
+    - truenas_version_number is defined
+    - truenas_version_number | length > 0
+    - truenas_version_number is match('^\\d+\\.\\d+$')
+    - truenas_version_number is version('25.04', '>=')
