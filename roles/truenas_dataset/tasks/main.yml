@@ -1,0 +1,55 @@
+# File: roles/truenas_dataset/tasks/main.yml
+---
+- name: URL-encode dataset path for API
+  set_fact:
+    dataset_path_encoded: "{{ dataset_path | replace('/', '%2F') }}"
+
+- name: Debug encoded path
+  debug:
+    msg:
+      - "Raw: {{ dataset_path_encoded }}"
+
+- name: Create TrueNAS dataset (ignore if exists)
+  uri:
+    url: "https://{{ truenas_host }}/api/v2.0/pool/dataset"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ truenas_api_key }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      name: "{{ dataset_path }}"
+      comments: "{{ dataset_comment | default('') }}"
+    status_code: [200, 422]  # 200 is create success 422 is exists already
+    validate_certs: false
+  register: dataset_result
+  failed_when: dataset_result.status not in [200, 422]
+
+- name: Set dataset permissions
+  uri:
+    url: "https://{{ truenas_host }}/api/v2.0/pool/dataset/id/{{ dataset_path_encoded }}/permission"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ truenas_api_key }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      user: "{{ dataset_owner | default('admin') }}"
+      group: "{{ dataset_group | default('admin') }}"
+      mode: "{{ dataset_mode | default('0775') }}"
+      acltype: "POSIX"
+    status_code: [200, 422]
+    validate_certs: false
+  register: permission_result
+  failed_when: permission_result.status not in [200, 422] 
+
+
+- name: Debug permissions
+  debug:
+    msg:
+      - "Raw": "{{ permission_result }}"
+      - "{{ permission_result.status }}"
+      - "{{ dataset_path }}"
+      - owner: "{{dataset_owner}}"
+      - group: "{{dataset_group}}"
+      - mode:  "{{dataset_mode }}"

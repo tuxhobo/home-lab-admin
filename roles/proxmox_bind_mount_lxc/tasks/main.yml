@@ -1,0 +1,70 @@
+# ./roles/proxmox_bind_mount_lxc/tasks/main.yml
+
+- name: Ensure source directory exists on Proxmox host
+  ansible.builtin.file:
+    path: "{{ source }}"
+    state: directory
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+    mode: "{{ mode }}"
+
+- name: Get container list
+  ansible.builtin.shell: pct list
+  register: pct_list_output
+  changed_when: false
+  check_mode: no
+
+- name: Display container list
+  ansible.builtin.debug:
+    var: pct_list_output.stdout_lines
+  check_mode: no
+
+- name: Extract container ID using grep
+  ansible.builtin.shell: >
+    pct list | grep '[[:space:]]{{ target_container }}[[:space:]]' | awk '{print $1}'
+  register: container_id_lookup
+  changed_when: false
+  check_mode: no
+  
+- name: Display found container ID
+  ansible.builtin.debug:
+    var: container_id_lookup.stdout
+    
+- name: Fail if container not found
+  ansible.builtin.fail:
+    msg: "Container '{{ target_container }}' not found on this Proxmox host."
+  when: container_id_lookup.stdout | trim == ''
+
+- name: Backup existing container config
+  ansible.builtin.copy:
+    src: "/etc/pve/lxc/{{ container_id_lookup.stdout }}.conf"
+    dest: "/root/{{ container_id_lookup.stdout }}.conf.bak"
+    remote_src: true
+    owner: "{{ owner }}"
+    group: "{{ group }}"
+    mode: "{{ mode }}"
+  when: container_id_lookup.stdout | trim != ""
+
+- block:
+    - name: Add bind mount to container config
+      ansible.builtin.lineinfile:
+        path: "/etc/pve/lxc/{{ container_id_lookup.stdout }}.conf"
+        regexp: "^lxc\\.mount\\.entry={{ source | regex_escape }}\\s+{{ target | regex_escape }}\\s+none\\s+bind,create=dir\\s+0\\s+0$"
+        line: "lxc.mount.entry={{ source }} {{ target }} none bind,create=dir 0 0"
+        state: present
+        create: no
+
+  rescue:
+    - name: Restore container config from backup
+      ansible.builtin.copy:
+        src: "/root/{{ container_id_lookup.stdout }}.conf.bak"
+        dest: "/etc/pve/lxc/{{ container_id_lookup.stdout }}.conf"
+        remote_src: true
+        owner: "{{ owner }}"
+        group: "{{ group }}"
+        mode: "{{ mode }}"
+      notify: "Rollback due to config failure"
+
+    - name: Fail task explicitly after rollback
+      ansible.builtin.fail:
+        msg: "Failed to update container config. Rolled back from backup."

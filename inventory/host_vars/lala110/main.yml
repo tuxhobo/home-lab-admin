@@ -1,0 +1,24 @@
+# ./inventory/host_vars/lala110/main.yml
+
+ansible_python_interpreter: /usr/bin/python3
+
+truenas_host: 10.0.0.110
+truenas_api_key: "{{ lala110_truenas_api_key }}"  # Load from vault
+
+storage:
+  paperless-ngx:
+    dataset:
+      name: paperless-ngx
+      path: atl/home/lala115-docker/paperless-ngx
+      share_name: paperless_ngx_share
+      owner: admin
+      group: admin
+      mode: '0775'
+      comment: "dataset for paperless-ngx docker container"
+    nfs_share:
+      dataset: "atl/home/docker/paperless-ngx"
+      networks:
+        - "10.0.0.0/24"
+      maproot_user: "admin"
+      maproot_group: "admin"
+      comment: "Paperless NGX NFS share"

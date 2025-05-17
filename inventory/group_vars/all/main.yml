@@ -1,0 +1,5 @@
+# ./inventory/group_vars/all/main.yml
+
+# NFS mount options
+nfs_mount_options: "vers=4,hard,nolock,bg"
+

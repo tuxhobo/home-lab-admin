@@ -1,0 +1,19 @@
+# inventory/host_vars/lala100/main.yml
+
+ansible_python_interpreter: /usr/bin/python3
+
+mount_sets:
+  paperless-ngx:
+    nfs:
+      src: 10.0.0.110:/mnt/atl/home/docker/paperless-ngx
+      dest: /mnt/lala110/paperless-ngx
+      fstype: nfs
+      comment: "NFS share to mount on proxmox host"
+    lxc_bind:
+      container_name: lala115
+      source: /mnt/lala110/paperless-ngx
+      target: /mnt/paperless-ngx
+      owner: admin
+      group: admin
+      mode: '0775'
+      comment: bind location in lxc container and user

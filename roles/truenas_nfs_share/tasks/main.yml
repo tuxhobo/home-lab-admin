@@ -1,0 +1,22 @@
+# ./roles/truenas_nfs_share/tasks/main.yml
+- name: Create NFS share in TrueNAS
+  uri:
+    url: "http://{{ truenas_host }}/api/v2.0/sharing/nfs"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ truenas_api_key }}"
+      Content-Type: "application/json"
+    body_format: json
+    body:
+      paths:
+        - "/mnt/{{ nfs_share_dataset }}"
+      comment: "{{ nfs_share_comment | default('NFS share for ' + nfs_share_dataset) }}"
+      networks: "{{ nfs_share_networks | default([]) }}"
+      maproot_user: "{{ nfs_share_maproot_user | default('root') }}"
+      maproot_group: "{{ nfs_share_maproot_group | default('wheel') }}"
+      nfs_share_comment: "{{ nfs_share_info.comment }}"
+      alldirs: true
+    status_code: [200, 422]
+    validate_certs: false
+  register: share_result
+  failed_when: share_result.status not in [200, 422]
