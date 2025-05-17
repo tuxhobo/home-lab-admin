@@ -2,7 +2,7 @@
 ---
 - name: URL-encode dataset path for API
   set_fact:
-    dataset_path_encoded: "{{ dataset_path | replace('/', '%252F') }}"
+    dataset_path_encoded: "{{ dataset_path | replace('/', '%2F') }}"
 
 - name: Debug encoded path
   debug:
@@ -11,7 +11,7 @@
 
 - name: Create TrueNAS dataset (ignore if exists)
   uri:
-    url: "http://{{ truenas_host }}/api/v2.0/pool/dataset"
+    url: "https://{{ truenas_host }}/api/v2.0/pool/dataset"
     method: POST
     headers:
       Authorization: "Bearer {{ truenas_api_key }}"
@@ -27,7 +27,7 @@
 
 - name: Set dataset permissions
   uri:
-    url: "http://{{ truenas_host }}/api/v2.0/pool/dataset/id/{{ dataset_path_encoded }}/permission"
+    url: "https://{{ truenas_host }}/api/v2.0/pool/dataset/id/{{ dataset_path_encoded }}/permission"
     method: POST
     headers:
       Authorization: "Bearer {{ truenas_api_key }}"
@@ -37,6 +37,19 @@
       user: "{{ dataset_owner | default('admin') }}"
       group: "{{ dataset_group | default('admin') }}"
       mode: "{{ dataset_mode | default('0775') }}"
-    status_code: 200
+      acltype: "POSIX"
+    status_code: [200, 422]
     validate_certs: false
-  when: dataset_owner is defined
+  register: permission_result
+  failed_when: permission_result.status not in [200, 422] 
+
+
+- name: Debug permissions
+  debug:
+    msg:
+      - "Raw": "{{ permission_result }}"
+      - "{{ permission_result.status }}"
+      - "{{ dataset_path }}"
+      - owner: "{{dataset_owner}}"
+      - group: "{{dataset_group}}"
+      - mode:  "{{dataset_mode }}"
