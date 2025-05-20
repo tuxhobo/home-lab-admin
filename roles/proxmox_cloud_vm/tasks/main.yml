@@ -1,0 +1,121 @@
+- name: Ensure image staging directory exists
+  file:
+    path: "{{ image_staging_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Check if cloud image exists
+  stat:
+    path: "{{ image_staging_dir }}/{{ vm_config.image_name }}"
+  register: image_stat
+
+- name: Download cloud image if missing
+  get_url:
+    url: "{{ vm_config.image_url }}"
+    dest: "{{ image_staging_dir }}/{{ vm_config.image_name }}"
+    mode: '0644'
+  when: not image_stat.stat.exists
+
+- name: Create VM
+  command: >
+    qm create {{ vm_config.vm_id }}
+    --name {{ vm_config.vm_name }}
+    --memory {{ vm_config.memory | default(2048) }}
+    --sockets {{ vm_config.cpu_sockets | default(1) }}
+    --cores {{ vm_config.cpu_cores | default(2) }}
+    --cpu {{ vm_config.cpu_type | default('kvm64') }}
+    --machine {{ vm_config.machine | default('pc') }}
+    --scsihw {{ vm_config.SCSI_Controller | default('virtio-scsi-pci') }}
+    --net0 virtio,bridge={{ vm_config.bridge }}
+    --ide2 {{ vm_config.Storage }}:cloudinit
+    --ostype l26
+    {% if vm_config.Qemu_agent | default(false) | bool %}--agent enabled=true{% endif %}
+    {% if vm_config.BIOS | default('Default') == 'OVMF (UEFI)' %}--bios ovmf{% endif %}
+  args:
+    creates: "/etc/pve/qemu-server/{{ vm_config.vm_id }}.conf"
+
+- name: Import disk image
+  command: >
+    qm importdisk {{ vm_config.vm_id }}
+    {{ image_staging_dir }}/{{ vm_config.image_name }}
+    {{ vm_config.Storage }}
+    --format qcow2
+
+- name: Attach disk
+  command: >
+    qm set {{ vm_config.vm_id }}
+    --{{ vm_config.Bus_Device | lower }}0 {{ vm_config.Storage }}:vm-{{ vm_config.vm_id }}-disk-0
+
+- name: Resize disk after import and attach
+  command: >
+    qm resize {{ vm_config.vm_id }}
+    {{ vm_config.Bus_Device | lower }}0
+    {{ vm_config["Disk_Size(GB)"] }}G
+  when: vm_config["Disk_Size(GB)"] is defined
+
+- name: Set boot order
+  command: >
+    qm set {{ vm_config.vm_id }}
+    --boot order={{ vm_config.Bus_Device | lower }}0;ide2;net0
+
+- name: Set VM to start at boot
+  command: >
+    qm set {{ vm_config.vm_id }}
+    --onboot {{ '1' if vm_config.vm_start_at_boot | default(false) else '0' }}
+
+- name: Read and sanitize SSH public key
+  ansible.builtin.set_fact:
+    sanitized_ssh_key: "{{ lookup('file', vm_config.ssh_key_path | default('~/.ssh/id_rsa.pub')) | replace('\n', '') }}"
+
+- name: Create custom cloud-init user-data file (without hashing)
+  copy:
+    dest: "/tmp/user-data-{{ vm_config.vm_id }}"
+    content: |
+      #cloud-config
+      users:
+        - name: admin
+          gecos: Admin User
+          sudo: ALL=(ALL) NOPASSWD:ALL
+          groups: sudo
+          shell: /bin/bash
+          lock_passwd: false
+          plain_text_passwd: "{{ vm_admin_password }}"
+          ssh_authorized_keys:
+            - {{ sanitized_ssh_key }}
+      chpasswd:
+        expire: false
+      ssh_pwauth: true
+    mode: '0644'
+
+- name: Ensure snippets directory exists
+  file:
+    path: "/var/lib/vz/snippets"
+    state: directory
+    mode: '0755'
+
+- name: Move user-data to snippets directory
+  command: >
+    cp /tmp/user-data-{{ vm_config.vm_id }} /var/lib/vz/snippets/
+
+- name: Apply custom user-data to VM
+  command: >
+    qm set {{ vm_config.vm_id }} --cicustom "user=local:snippets/user-data-{{ vm_config.vm_id }}"
+
+- name: Configure cloud-init network settings
+  command: >
+    qm set {{ vm_config.vm_id }}
+    --ipconfig0 ip=dhcp
+
+- name: Set cloud-init data source type
+  command: >
+    qm set {{ vm_config.vm_id }}
+    --citype nocloud
+
+- name: Remove temporary user-data file
+  file:
+    path: "/tmp/user-data-{{ vm_config.vm_id }}"
+    state: absent
+
+- name: Regenerate cloud-init drive after configuration
+  command: >
+    qm cloudinit update {{ vm_config.vm_id }}
