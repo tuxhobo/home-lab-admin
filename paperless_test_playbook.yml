@@ -1,0 +1,21 @@
+# File: paperless_test_playbook.yml
+
+---
+# Main playbook that coordinates all testing scenarios for paperless-ngx
+
+- name: Test paperless-ngx NFS configuration
+  hosts: localhost
+  gather_facts: false
+  
+  tasks:
+    - name: Run paperless dataset creation test
+      import_playbook: roles/paperless_tests/tests/test_dataset_creation.yml
+      
+    - name: Run NFS mount test
+      import_playbook: roles/paperless_tests/tests/test_nfs_mount.yml
+      
+    - name: Run LXC container mount test
+      import_playbook: roles/paperless_tests/tests/test_lxc_mount.yml
+      
+    - name: Run end-to-end file test
+      import_playbook: roles/paperless_tests/tests/test_e2e_file.yml

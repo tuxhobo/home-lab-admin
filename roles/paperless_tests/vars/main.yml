@@ -1,0 +1,6 @@
+# File: roles/paperless_tests/vars/main.yml
+---
+# It's primarily used for ensuring consistent variable access patterns across playbooks
+
+# Test file (only thing not in inventory)
+test_file_name: paperless_test_file.txt

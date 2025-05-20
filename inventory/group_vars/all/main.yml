@@ -3,3 +3,7 @@
 # NFS mount options
 nfs_mount_options: "vers=4,hard,nolock,bg"
 
+vm_users:
+  - name: admin
+    local_key_path: "~/.ssh/id_rsa.pub"
+

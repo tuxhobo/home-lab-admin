@@ -1,0 +1,52 @@
+# File: roles/paperless_tests/tests/test_dataset_creation.yml
+---
+# Test that paperless-ngx dataset is created on lala110
+
+- name: Test dataset creation on NFS server
+  hosts: lala110
+  gather_facts: true
+  become: true
+  
+  vars_files:
+    - ../../paperless_tests/vars/main.yml
+  
+  tasks:
+    - name: Get paperless dataset information from inventory
+      set_fact:
+        dataset_name: "{{ hostvars['lala110']['paperless_dataset_name'] | default('paperless-ngx') }}"
+        dataset_path: "{{ hostvars['lala110']['paperless_dataset_path'] | default('/data/paperless-ngx') }}"
+        dataset_owner: "{{ hostvars['lala110']['paperless_dataset_owner'] | default(paperless_user | default('root')) }}"
+        dataset_group: "{{ hostvars['lala110']['paperless_dataset_group'] | default(paperless_group | default('root')) }}"
+        dataset_mode: "{{ hostvars['lala110']['paperless_dataset_mode'] | default('0755') }}"
+        dataset_export: "{{ hostvars['lala110']['paperless_dataset_export'] | default('*(rw,sync,no_subtree_check,no_root_squash)') }}"
+    
+    - name: Check if dataset exists
+      stat:
+        path: "{{ dataset_path }}"
+      register: dataset_stat
+      
+    - name: Fail playbook if data set does not exist
+      ansible.builtin.fail:
+        msg: "ERROR: '{{ dataset_path }}' does not exist."
+      when: not dataset_stat.stat.exists
+      
+    - name: Verify dataset permissions
+      file:
+        path: "{{ dataset_path }}"
+        state: directory
+        mode: "{{ dataset_mode }}"
+        owner: "{{ dataset_owner }}"
+        group: "{{ dataset_group }}"
+      
+    - name: Ensure dataset is properly shared via NFS
+      lineinfile:
+        path: /etc/exports
+        line: "{{ dataset_path }} {{ dataset_export }}"
+        state: present
+      register: exports_update
+      
+    - name: Fail playbook if data set is not nfs share
+      systemd:
+        name: "{{ hostvars['lala110']['nfs_server_service'] | default('nfs-server') }}"
+        state: reloaded
+      when: exports_update.changed
