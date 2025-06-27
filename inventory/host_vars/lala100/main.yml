@@ -2,6 +2,43 @@
 
 ansible_python_interpreter: /usr/bin/python3
 
+pve_node: https://10.0.0.100
+pve_host: lala100
+image_staging_dir: /var/lib/vz/template/images
+
+virtual_machines:
+  lala101:
+    vm_id: 101
+    vm_name: lala101
+    vm_start_at_boot: true
+    vm_shutdown_order: any         # <- Not directly supported by qm, may be used for orchestrated shutdowns
+    vm_startup_delay: default      # <- Not a qm param unless used in `--startdelay`
+    
+    Storage: local-lvm
+    Guest_OS_Type: l26              # l26 = Linux 2.6/3.x/4.x/5.x/6.x
+    Guest_OS_Version: 6x-2.6 Kernel # <- Informational only; remove unless you use it somewhere else
+
+    machine: q35
+    SCSI_Controller: virtio-scsi-single
+    Qemu_agent: false
+    BIOS: seabios                    # seabios or ovmf
+
+    Bus_Device: scsi                # Use this lowercase string in `qm set`
+    Disk_Size(GB): 32
+    Format: qcow2                   # Use this as `--format qcow2` in `qm importdisk`
+
+    Backup: true
+    Backup_storage: Backup2lala120
+
+    cpu_sockets: 1
+    cpu_cores: 4
+    cpu_type: host
+
+    bridge: vmbr0
+
+    image_url: https://cloud-images.ubuntu.com/minimal/releases/noble/release/ubuntu-24.04-minimal-cloudimg-amd64.img
+    image_name: ubuntu-24.04-minimal-cloudimg-amd64.img
+
 mount_sets:
   paperless-ngx:
     nfs:
