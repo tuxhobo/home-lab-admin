@@ -1,0 +1,23 @@
+#./roles/truenas_interface_configure/tasks/main.yml
+
+- name: Fail if truenas_api_key is not set
+  fail:
+    msg: "truenas_api_key is not defined"
+  when: truenas_api_key is not defined
+
+- name: Ensure replication interface exists
+  uri:
+    url: "http://{{ truenas_host }}/api/v2.0/network/interface/"
+    method: POST
+    headers:
+      Authorization: "Bearer {{ truenas_api_key }}"
+    body_format: json
+    body:
+      name: "{{ replication_network.name }}"
+      type: INET
+      ipv4_dhcp: false
+      ipv4_address: "{{ replication_network.IPv4_CIDR.split('/') | first }}"
+      ipv4_netmask: "{{ replication_network.IPv4_CIDR.split('/') | last }}"
+      aliases: []
+  register: result
+  failed_when: result.status >= 400

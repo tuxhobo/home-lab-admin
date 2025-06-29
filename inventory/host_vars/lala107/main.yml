@@ -1,0 +1,13 @@
+# ./inventory/host_vars/lala107/main.yml
+
+ansible_python_interpreter: /usr/bin/python3
+
+lala107: 10.0.0.107
+syncoid_host: "{{ lala107 }}"
+
+replication_network:
+  name: eth1
+  IPv4_CIDR: 10.100.150.3/28
+  bridge: vmbr1
+  route: 10.100.150.1
+  comment: "Replication interface"

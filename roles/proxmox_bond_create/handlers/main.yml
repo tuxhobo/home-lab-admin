@@ -1,0 +1,6 @@
+# File: ./roles/proxmox_bond_create/handlers/main.yml
+---
+- name: Reload Proxmox Network # <--- Check this string
+  ansible.builtin.command: ifreload -a
+  listen: "Reload Proxmox Network" # <--- And this string (if using 'listen')
+  changed_when: true

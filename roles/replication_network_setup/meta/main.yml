@@ -1,0 +1,14 @@
+# File: ./roles/replication_network_setup/meta/main.yml
+
+dependencies:
+  - role: proxmox_bond_create
+    when: linux_bonds is defined
+
+  - role: proxmox_bridge_create
+    when: linux_bridges is defined
+
+  - role: truenas_interface_configure
+    when: truenas_host is defined
+
+  - role: lxc_interface_configure
+    when: syncoid_host is defined

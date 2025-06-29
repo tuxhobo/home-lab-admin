@@ -1,0 +1,7 @@
+# File: ./inventory/group_vars/all.yml
+
+ansible_user: admin
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no'  # optional
+
+stdout_callback = yaml
+

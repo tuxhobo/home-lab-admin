@@ -1,0 +1,16 @@
+# ./inventory/host_vars/lala160/main.yml
+
+ansible_python_interpreter: /usr/bin/python3
+
+lala160: 10.0.0.160
+truenas_host: "{{ lala160 }}"
+
+truenas_api_key: "{{ lala160_truenas_api_key }}"  # Load from vault
+
+
+replication_network:
+  name: eth1
+  IPv4_CIDR: 10.100.150.6/28
+  bridge: vmbr1
+  route: 10.100.150.2
+  comment: "Replication interface"

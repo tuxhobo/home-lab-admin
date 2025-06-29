@@ -1,0 +1,20 @@
+# File: ./roles/proxmox_bridge_create/tasks/main.yml
+
+- name: Configure bridge interface(s) directly in /etc/network/interfaces
+  ansible.builtin.blockinfile:
+    path: /etc/network/interfaces
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ item.key | upper }} BRIDGE" # Unique marker for each bridge
+    block: |
+      auto {{ item.key }}
+      iface {{ item.key }} inet static
+        address {{ item.value.IPv4_CIDR }}
+        bridge-ports {{ item.value.bridge_ports }}
+        bridge-stp off
+        bridge-fd 0
+        comment "{{ item.value.comment }}"
+    # Insert bridges before the last line in the file and keeps new bridges
+    # grouped at the end of the directly managed interfaces section.
+    insertbefore: "^source /etc/network/interfaces.d/\\*$"
+    backup: yes # Good practice
+  with_dict: "{{ linux_bridges }}"
+  notify: Reload Proxmox Network

@@ -1,0 +1,17 @@
+# File: ./playbooks/setup_replication_network.yml
+---
+- name: Setup Replication Network
+  hosts:
+    - lala100
+    - lala150
+    - lala110
+    - lala160
+    - lala107
+  become: true
+ # gather_facts: false
+
+  vars_files:
+    - ../vault/vault.yml
+
+  roles:
+    - replication_network_setup

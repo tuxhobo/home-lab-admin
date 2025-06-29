@@ -3,6 +3,8 @@
 ansible_python_interpreter: /usr/bin/python3
 
 truenas_host: 10.0.0.110
+lala110: "{{ truenas_host }}"
+
 truenas_api_key: "{{ lala110_truenas_api_key }}"  # Load from vault
 
 storage:
@@ -18,7 +20,15 @@ storage:
     nfs_share:
       dataset: "atl/home/docker/paperless-ngx"
       networks:
-        - "10.0.0.0/24"
+        - "10.0.0.0/28"
       maproot_user: "admin"
       maproot_group: "admin"
       comment: "Paperless NGX NFS share"
+
+replication_network:
+  name: eth1
+  IPv4_CIDR: 10.100.150.5/28
+  bridge: vmbr1
+  route: 10.100.150.1
+  comment: "Replication Interface"
+

@@ -2,13 +2,30 @@
 
 ansible_python_interpreter: /usr/bin/python3
 
+# PVE host specific variables constant over all vms
 pve_node: https://10.0.0.100
 pve_host: lala100
-image_staging_dir: /var/lib/vz/template/images
+
+# PVE host variables for the vm template
+# image_staging_dir: /var/lib/vz/template/images
+qcow2_staging_dir:  /var/lib/vz/template/qcow2
+template_id: 9000
+template_cores: 2
+template_memory: 1024
+template_net0: "virtio,bridge=vmbr0"
+template_ide2: "local:cloudinit"
+template_ostype: l26
+template_scsihw: virtio-scsi-pci
+template_sata0: "local:9000/vm-9000-disk-0.qcow2"
+template_ciuser: admin
+cipassword: "{{ vault_root_password }}"
+template_dir: /var/lib/vz/template
+state: present
+
 
 virtual_machines:
   lala101:
-    vm_id: 101
+    vm_id: 1100101
     vm_name: lala101
     vm_start_at_boot: true
     vm_shutdown_order: any         # <- Not directly supported by qm, may be used for orchestrated shutdowns
@@ -36,8 +53,11 @@ virtual_machines:
 
     bridge: vmbr0
 
-    image_url: https://cloud-images.ubuntu.com/minimal/releases/noble/release/ubuntu-24.04-minimal-cloudimg-amd64.img
-    image_name: ubuntu-24.04-minimal-cloudimg-amd64.img
+    image_url: https://cloud.debian.org/images/cloud/bookworm/latest/debian-12-generic-amd64.qcow2
+    image_name: debian-12-generic-amd64.qcow2
+
+#    image_url: https://cloud-images.ubuntu.com/minimal/releases/noble/release/ubuntu-24.04-minimal-cloudimg-amd64.img
+#    image_name: ubuntu-24.04-minimal-cloudimg-amd64.img
 
 mount_sets:
   paperless-ngx:
@@ -54,3 +74,25 @@ mount_sets:
       group: admin
       mode: '0775'
       comment: bind location in lxc container and user
+
+linux_bonds:
+  bond0:
+    comment: "Replication bond"
+    slaves: "eno2 eno3 eno4"
+    mode: balance-xor
+    hash_policy: layer3+4
+
+linux_bridges:
+  vmbr1:
+    IPv4_CIDR: 10.100.150.1/28
+    auto_start: true
+    bridge_ports: "bond0"
+    comment: "Replication bridge"
+
+
+containers:
+  lala107:
+    lxc_id: 1150107
+    node_addr: 10.0.0.107
+
+

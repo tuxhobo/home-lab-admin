@@ -1,0 +1,22 @@
+# inventory/host_vars/lala150/main.yml
+
+ansible_python_interpreter: /usr/bin/python3
+
+# PVE host specific variables constant over all vms
+pve_node: https://10.0.0.150
+pve_host: lala150
+
+
+linux_bonds:
+  bond0:
+    comment: "Replication bond"
+    slaves: "eno2 eno3 eno4"
+    mode: balance-xor
+    hash_policy: layer3+4
+
+linux_bridges:
+  vmbr1:
+    IPv4_CIDR: 10.100.150.2/28
+    auto_start: true
+    bridge_ports: "bond0"
+    comment: "Replication bridge"

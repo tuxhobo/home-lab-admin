@@ -1,0 +1,19 @@
+# File: ./roles/proxmox_bond_create/tasks/main.yml
+
+- name: Configure bond interface(s) directly in /etc/network/interfaces
+  ansible.builtin.blockinfile:
+    path: /etc/network/interfaces
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR {{ item.key | upper }} BOND" # Unique marker for each bond
+    block: |
+      auto {{ item.key }}
+      iface {{ item.key }} inet manual
+        bond-slaves {{ item.value.slaves }}
+        bond-miimon 100
+        bond-mode {{ item.value.mode }}
+        bond-xmit-hash-policy {{ item.value.hash_policy }}
+        comment "{{ item.value.comment }}"
+    # This assumes 'auto vmbr0' will always be present.
+    insertbefore: "auto vmbr0"
+    backup: yes # Always good practice when modifying main config files
+  with_dict: "{{ linux_bonds }}"
+  notify: Reload Proxmox Network

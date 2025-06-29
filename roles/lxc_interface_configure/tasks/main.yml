@@ -1,0 +1,19 @@
+# ./roles/lxc_interface_configure/tasks/main.yml
+
+- name: Add LXC interface config
+  lineinfile:
+    path: "/etc/pve/lxc/{{ inventory_hostname }}.conf"
+    line: "net1: name={{ replication_network.name }},bridge={{ replication_network.bridge }},hwaddr=02:00:00:aa:bb:cc,type=veth"
+    insertafter: EOF
+
+- name: Configure static IP inside container
+  copy:
+    dest: "/etc/network/interfaces.d/{{ replication_network.name }}.cfg"
+    content: |
+      auto {{ replication_network.name }}
+      iface {{ replication_network.name }} inet static
+        address {{ replication_network.IPv4_CIDR }}
+        post-up ip route add {{ replication_network.route }}/32 dev {{ replication_network.name }}
+  delegate_to: "{{ inventory_hostname }}"
+  when: "'lxc' in group_names"
+  
