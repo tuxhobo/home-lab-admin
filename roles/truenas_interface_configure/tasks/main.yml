@@ -7,7 +7,7 @@
 
 - name: Ensure replication interface exists
   uri:
-    url: "http://{{ truenas_host }}/api/v2.0/network/interface/"
+    url: "http://{{ truenas_host }}/api/v2.0/interface/"
     method: POST
     headers:
       Authorization: "Bearer {{ truenas_api_key }}"
